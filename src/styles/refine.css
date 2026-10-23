@@ -1,0 +1,44 @@
+/* Refined visual layer — component overrides (loaded after domain styles) */
+.sidebar{background:rgba(255,255,255,.97);border-right-color:#e9ede6}
+.topbar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom-color:#e9ede6}
+.page-wrap{max-width:1450px}
+h1{font-size:27px;letter-spacing:-1.2px;color:#263229}
+.eyebrow{letter-spacing:1.05px}
+.stat-card{border-color:#e9ede7;box-shadow:0 2px 8px #263a2405;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.stat-card:hover{transform:translateY(-2px);border-color:#dce5d9;box-shadow:0 9px 22px #263a240c}
+.stat-icon{box-shadow:inset 0 0 0 1px #00000005}
+.panel{border-color:#e8ece5;box-shadow:0 2px 9px #27352205}
+.occupancy-panel,.arrivals-panel,.reservations-panel{box-shadow:0 3px 12px #27352206}
+.panel-header h2{color:#303830}
+.chart .bar-group .bar{transition:height .35s cubic-bezier(.2,.7,.2,1),background .2s}
+.table-scroll tbody tr{transition:background .14s ease}
+.table-scroll tbody tr:hover{background:#fafcf9}
+th{background:#f8faf7;color:#838b80}
+.status-badge{letter-spacing:.1px}
+.primary-button{background:linear-gradient(135deg,#4b7453,#3e6548);box-shadow:0 4px 10px #355c3c21}
+.primary-button:hover{background:linear-gradient(135deg,#426b4a,#31583a);box-shadow:0 6px 14px #355c3c2b}
+.select-button:hover,.more-button:hover,.icon-button:hover,.date-button:hover{border-color:#d8e1d5;background:#fbfdfb;color:#476d4b}
+.text-link:hover,.bottom-link:hover{color:#355a3a}
+.nav-item{transition:background .14s ease,color .14s ease}
+.nav-item.active{box-shadow:inset 2px 0 #557c59}
+.help-card{background:linear-gradient(140deg,#f7f9f5,#f2f5ef)}
+.booking-modal{border:1px solid #e7ece5;box-shadow:0 30px 90px #1f30284a}
+.booking-modal input:focus,.booking-modal select:focus,.table-search:focus-within{border-color:#92ad91;box-shadow:0 0 0 3px #eaf2e9}
+:focus-visible{outline:3px solid #9bb69b!important;outline-offset:2px}
+.api-notice{box-shadow:0 2px 6px #6d522009}
+.page-footer{border-top:1px solid #e8ece5;margin-top:2px}
+
+@media(max-width:760px){
+  h1{font-size:23px}
+  .page-wrap{max-width:100%}
+  .topbar{box-shadow:0 2px 10px #263a2405}
+  .welcome-row{margin-bottom:18px}
+  .stat-card{box-shadow:0 2px 9px #263a2408}
+  .dashboard-grid{gap:12px}
+  .reservations-panel{box-shadow:0 3px 12px #27352208}
+  .mobile-menu{height:34px;width:34px;border:1px solid #e8ece5;border-radius:7px;background:#fff}
+  .page-footer{padding-top:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}

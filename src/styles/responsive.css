@@ -1,0 +1,120 @@
+@media(min-width:1500px){
+  .page-wrap{padding-top:41px}
+  .stat-card{min-height:133px}
+  .occupancy-panel,.arrivals-panel{height:295px}
+  .chart-wrap{height:177px}
+  .bar-group{height:145px}
+}
+@media(max-width:1100px){
+  .sidebar{width:220px}
+  .main-content{margin-left:220px}
+  .topbar{padding:0 25px}
+  .page-wrap{padding:30px 25px 16px}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-grid{grid-template-columns:1.2fr 1fr;gap:11px}
+  .occupancy-panel,.arrivals-panel{padding-left:14px;padding-right:14px}
+  .currency{font-size:20px}
+}
+@media(max-width:760px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s;box-shadow:8px 0 30px #18231a15}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0}
+  .topbar{height:59px;padding:0 17px}
+  .mobile-menu{display:block;border:0;background:none;color:#657063;font-size:18px;margin-right:10px;cursor:pointer}
+  .breadcrumbs{margin-right:auto}
+  .top-actions{gap:8px}
+  .date-button{font-size:0;width:35px;justify-content:center;padding:0}
+  .date-button span:first-child{font-size:16px}
+  .date-button .down{display:none}
+  .top-actions .notification-button,.top-divider,.top-actions .small-avatar{display:none}
+  .search-bar{right:15px;top:53px;width:min(365px,calc(100vw - 30px))}
+  .page-wrap{padding:24px 17px 14px}
+  .welcome-row{align-items:flex-start;gap:12px}
+  .welcome-row h1{font-size:21px}
+  .welcome-row p{font-size:11px;line-height:1.5;max-width:265px}
+  .welcome-row>.primary-button{height:35px;padding:0 10px;white-space:nowrap;font-size:10px}
+  .stats-grid{gap:9px}
+  .stat-card{min-height:116px;padding:12px}
+  .stat-value{font-size:24px}
+  .stat-top{font-size:10px}
+  .stat-foot{font-size:8px}
+  .dashboard-grid{grid-template-columns:1fr}
+  .occupancy-panel{height:276px}
+  .arrivals-panel{height:auto;padding-bottom:0}
+  .arrival-item{padding:9px 0}
+  .reservations-heading{align-items:flex-start;gap:13px;flex-direction:column}
+  .reservation-actions{width:100%}
+  .table-search{flex:1}
+  .desktop-view-all{margin-left:auto}
+  .table-footer{height:auto;min-height:50px}
+  .page-footer{gap:10px;align-items:flex-start;line-height:1.6}
+  .page-footer span:last-child{text-align:right}
+  .filter-button{white-space:nowrap}
+}
+@media(max-width:390px){
+  .page-wrap{padding-left:12px;padding-right:12px}
+  .welcome-row h1{font-size:19px}
+  .eyebrow{font-size:8px}
+  .welcome-row>.primary-button{padding:0 8px}
+  .stats-grid{gap:7px}
+  .stat-card{padding:10px}
+  .stat-value{font-size:22px}
+  .currency{font-size:17px}
+  .status-chip{font-size:7px}
+  .occupancy-panel,.arrivals-panel,.reservations-panel{padding-left:11px;padding-right:11px}
+  .panel-tools{gap:4px}
+  .chart-legend{gap:8px;font-size:8px}
+  .reservation-actions{gap:5px}
+  .filter-button{padding:0 6px}
+}
+@media(max-width:700px){
+  .reservations-panel{padding-left:12px;padding-right:12px}
+  .table-scroll{overflow-x:hidden}
+  table{min-width:0;table-layout:fixed}
+  th,td{padding-left:4px;padding-right:4px;font-size:8px}
+  th{font-size:7px;letter-spacing:.25px}
+  th:nth-child(4),td:nth-child(4),th:nth-child(7),td:nth-child(7){display:none}
+  th:nth-child(1){width:29%}th:nth-child(2){width:19%}th:nth-child(3){width:22%}th:nth-child(5){width:14%}th:nth-child(6){width:16%}
+  .guest-cell{gap:5px}
+  .guest-cell>span:last-child{max-width:84px;overflow:hidden;text-overflow:ellipsis}
+  .table-avatar{height:22px;width:22px;flex:none}
+  .status-badge{padding:4px 5px;font-size:7px}
+  .amount{font-size:8px}
+}
+@media(max-width:1000px){
+  .task-board{grid-template-columns:repeat(5,185px)}
+  .report-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .module-heading{align-items:flex-start}
+  .module-heading h1{font-size:23px}
+  .module-stats{gap:8px}
+  .module-stat{padding:12px;min-height:98px}
+  .module-stat strong{font-size:19px}
+  .module-panel{padding:0 11px}
+  .module-toolbar{flex-wrap:wrap;padding:10px 0}
+  .module-toolbar .table-search{width:100%;flex:1 1 100%}
+  .module-result{margin-left:auto}
+  .report-filters{display:grid;grid-template-columns:1fr 1fr}
+  .report-filters label select{width:100%}
+  .report-filters .primary-button{margin:0}
+  .report-grid{grid-template-columns:1fr}
+  .settings-layout{grid-template-columns:1fr}
+  .settings-tabs{position:static;display:flex;overflow:auto}
+  .settings-tabs a{white-space:nowrap}
+  .settings-form{padding:15px}
+  .task-board{grid-template-columns:repeat(5,175px)}
+}
+@media(max-width:430px){
+  .module-stats{grid-template-columns:1fr 1fr}
+  .module-stat:last-child{grid-column:1/-1}
+  .module-heading>.primary-button{padding:0 9px;white-space:nowrap;font-size:9px}
+  .module-heading p{max-width:230px;line-height:1.5}
+  .report-stats{grid-template-columns:1fr 1fr}
+  .report-filters{gap:8px;padding:11px}
+  .report-filters input,.report-filters select{min-width:0;width:100%}
+  .settings-grid{grid-template-columns:1fr}
+  .module-modal form{grid-template-columns:1fr}
+  .module-modal form>label:only-of-type,.module-modal .modal-actions{grid-column:auto}
+  .settings-actions{align-items:flex-start;flex-direction:column}
+}

@@ -1,0 +1,13 @@
+/**
+ * HavenDesk stylesheet.
+ * Styles are classified by domain and loaded in cascade order:
+ * vars → base → layout → dashboard → overlay → modules → refine → responsive
+ */
+@import './styles/vars.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/dashboard.css';
+@import './styles/overlay.css';
+@import './styles/modules.css';
+@import './styles/refine.css';
+@import './styles/responsive.css';
