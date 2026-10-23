@@ -8,7 +8,7 @@ import Pagination from '../common/Pagination.jsx';
  */
 export default function ReservationsPanel() {
   const {
-    visibleReservations, query, setQuery, filter, setFilter,
+    visibleReservations, filteredReservations, query, setQuery, filter, setFilter,
     currentPage, setCurrentPage, pageCount, firstVisible, lastVisible,
     selectNav, setToast,
     permissions,
@@ -61,7 +61,7 @@ export default function ReservationsPanel() {
       </div>
 
       <div className="table-footer">
-        <span>Showing {firstVisible}–{lastVisible} of {visibleReservations.length} reservations</span>
+        <span>Showing {firstVisible}–{lastVisible} of {filteredReservations.length} reservations</span>
         <Pagination currentPage={currentPage} pageCount={pageCount} onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))} onNext={() => setCurrentPage((p) => Math.min(pageCount, p + 1))} />
       </div>
     </section>

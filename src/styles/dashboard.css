@@ -130,6 +130,8 @@ td:last-child,th:last-child{text-align:right;padding-right:11px}
 .status-confirmed{background:#edf5ec;color:#638264}
 .status-pending{background:#faf2e3;color:#b0884e}
 .status-checked{background:#edf0f6;color:#74819c}
+.status-checked-in,.status-checked-out{background:#edf0f6;color:#74819c}
+.status-cancelled,.status-no-show{background:#f9eceb;color:#a75b54}
 .amount{color:#52594f;font-weight:600}
 .row-more{border:0;background:none;color:#8d9389;font-size:16px;cursor:pointer}
 

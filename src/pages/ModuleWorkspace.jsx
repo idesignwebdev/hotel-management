@@ -46,20 +46,37 @@ export default function ModuleWorkspace({ page }) {
     setBusy(true);
     try {
       if (live) {
-        if (payment) await hotelApi.recordPayment(record.id, payment);
+        if (payment) {
+          await hotelApi.recordPayment(record.id, payment);
+          try {
+            const refreshed = await hotelApi.getModule(page);
+            setRows(unwrapList(refreshed));
+            setToast('Payment recorded and folio refreshed from the hotel system.');
+          } catch {
+            setToast('Payment recorded. The folio could not refresh; reload to see the latest balance.');
+          }
+          return true;
+        }
         else if (patch) await hotelApi.updateModule(page, record.id, record);
-        else await hotelApi.createModule(page, record);
+        else {
+          const created = await hotelApi.createModule(page, record);
+          const savedRecord = created && typeof created === 'object' ? { ...record, ...created } : record;
+          setRows((current) => [savedRecord, ...current]);
+          setToast('Changes saved to the hotel system.');
+          return true;
+        }
         setRows(next);
         setToast('Changes saved to the hotel system.');
+        return true;
       } else {
         setRows(next);
         localStorage.setItem('havendesk:' + page, JSON.stringify(next));
         setToast('Saved in this browser demo. Connect the Django endpoint to sync.');
+        return true;
       }
     } catch (error) {
-      setRows(next);
-      localStorage.setItem('havendesk:' + page, JSON.stringify(next));
-      setToast('Server save failed: ' + error.message + '. Kept in browser demo.');
+      setToast('Server did not save the change: ' + error.message + '. Your form data is still available to retry.');
+      return false;
     } finally { setBusy(false); }
   };
 
@@ -71,9 +88,11 @@ export default function ModuleWorkspace({ page }) {
       const invoice = rows.find((r) => String(r.id) === data.invoice_id);
       const amount = Number(data.amount);
       if (!invoice || amount <= 0) return setToast('Choose an invoice and enter a positive payment amount.');
+      const due = Number(invoice.total || 0) - Number(invoice.paid || 0);
+      if (amount > due) return setToast('Payment cannot exceed the outstanding invoice balance.');
       const updated = { ...invoice, paid: Number(invoice.paid || 0) + amount, method: data.method, status: Number(invoice.paid || 0) + amount >= Number(invoice.total) ? 'Paid' : 'Partial' };
-      setModal(false);
-      await persist(rows.map((r) => r.id === invoice.id ? updated : r), updated, true, { amount, method: data.method });
+      const ok = await persist(rows.map((r) => r.id === invoice.id ? updated : r), updated, true, { amount, method: data.method });
+      if (ok) setModal(false);
       return;
     }
 
@@ -81,8 +100,8 @@ export default function ModuleWorkspace({ page }) {
     if (page === 'Rooms') item = { ...item, capacity: Number(item.capacity), rate: Number(item.rate), status: item.status || 'Ready' };
     if (page === 'Guests') item = { ...item, stays: 0, balance: 0 };
     if (page === 'Housekeeping') item = { ...item, priority: 'Normal', status: 'Queued' };
-    setModal(false);
-    await persist([item, ...rows], item);
+    const ok = await persist([item, ...rows], item);
+    if (ok) setModal(false);
   };
 
   const advance = async (task) => {

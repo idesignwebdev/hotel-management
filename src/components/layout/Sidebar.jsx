@@ -6,7 +6,7 @@ import { navGroups } from '../../data/sample.js';
  * settings, help card and profile.
  */
 export default function Sidebar() {
-  const { activePage, setActivePage, mobileNavOpen, setMobileNavOpen, role, setRole, roleNames, permissions } = useApp();
+  const { activePage, setActivePage, mobileNavOpen, setMobileNavOpen, role, setRole, roleNames, permissions, setToast } = useApp();
 
   const selectNav = (page) => {
     setActivePage(page);

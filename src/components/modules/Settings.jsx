@@ -32,10 +32,7 @@ export default function Settings({ notify }) {
       else { localStorage.setItem('havendesk:settings', JSON.stringify(data)); notify('Settings saved in this browser preview.'); }
       setSaved(data);
     } catch (error) {
-      localStorage.setItem('havendesk:settings', JSON.stringify(data));
-      setSaved(data);
-      setLive(false);
-      notify('Server save failed: ' + error.message + '. Kept in this browser preview.');
+      notify('Server did not save settings: ' + error.message + '. Your entered values remain available to retry.');
     } finally { setSaving(false); }
   };
 
@@ -53,12 +50,12 @@ export default function Settings({ notify }) {
             <h2>Property profile</h2>
             <p>Details shown on invoices and operational screens.</p>
             <div className="settings-grid">
-              <label>Hotel name<input name="hotel" value={saved.hotel || 'Haven House Hotel'} onChange={change} /></label>
-              <label>Contact email<input name="email" type="email" value={saved.email || 'frontdesk@havenhouse.example'} onChange={change} /></label>
-              <label>Timezone<select name="timezone" value={saved.timezone || 'Africa/Nairobi'} onChange={change}>
+              <label>Hotel name<input name="hotel" value={saved.hotel ?? 'Haven House Hotel'} onChange={change} /></label>
+              <label>Contact email<input name="email" type="email" value={saved.email ?? 'frontdesk@havenhouse.example'} onChange={change} /></label>
+              <label>Timezone<select name="timezone" value={saved.timezone ?? 'Africa/Nairobi'} onChange={change}>
                 <option>Africa/Nairobi</option><option>UTC</option>
               </select></label>
-              <label>Currency<select name="currency" value={saved.currency || 'KES'} onChange={change}>
+              <label>Currency<select name="currency" value={saved.currency ?? 'KES'} onChange={change}>
                 <option>KES</option><option>USD</option><option>EUR</option>
               </select></label>
             </div>
@@ -67,10 +64,10 @@ export default function Settings({ notify }) {
             <h2>Operating rules</h2>
             <p>Local times and policies used by front desk workflows.</p>
             <div className="settings-grid">
-              <label>Check-in time<input type="time" name="checkin" value={saved.checkin || '14:00'} onChange={change} /></label>
-              <label>Check-out time<input type="time" name="checkout" value={saved.checkout || '10:00'} onChange={change} /></label>
-              <label>Default tax (%)<input type="number" name="tax" min="0" value={saved.tax || '16'} onChange={change} /></label>
-              <label>Cancellation policy<select name="cancellation" value={saved.cancellation || '24 hours'} onChange={change}>
+              <label>Check-in time<input type="time" name="checkin" value={saved.checkin ?? '14:00'} onChange={change} /></label>
+              <label>Check-out time<input type="time" name="checkout" value={saved.checkout ?? '10:00'} onChange={change} /></label>
+              <label>Default tax (%)<input type="number" name="tax" min="0" value={saved.tax ?? '16'} onChange={change} /></label>
+              <label>Cancellation policy<select name="cancellation" value={saved.cancellation ?? '24 hours'} onChange={change}>
                 <option>24 hours</option><option>48 hours</option><option>Non-refundable</option>
               </select></label>
             </div>
