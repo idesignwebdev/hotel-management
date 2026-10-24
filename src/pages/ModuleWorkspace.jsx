@@ -22,7 +22,7 @@ const initials = (s = '') => s.split(/\s+/).slice(0, 2).map((x) => x[0] || '').j
  *  - API unreachable and no demo mode → read-only offline (no local writes).
  */
 export default function ModuleWorkspace({ page }) {
-  const { setToast, demoMode, apiState, setApiState, apiMessage, role } = useApp();
+  const { setToast, demoMode, apiState, setApiState, role } = useApp();
   const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [rows, setRows] = useState(seed[page] || []);
@@ -47,7 +47,7 @@ export default function ModuleWorkspace({ page }) {
           setServerCount(data.count);
           setLive(true);
           setApiState('connected');
-          setApiMessage('');
+          setToast('');
         }
       })
       .catch((error) => {
@@ -55,17 +55,17 @@ export default function ModuleWorkspace({ page }) {
         setLive(false);
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           setApiState('offline');
-          setApiMessage('Session expired. Please sign in again.');
+          setToast('Session expired. Please sign in again.');
         } else if (demoMode) {
           setApiState('demo');
-          setApiMessage('Running in local demo mode. Connect the Django API to sync.');
+          setToast('Running in local demo mode. Connect the Django API to sync.');
         } else {
           setApiState('offline');
-          setApiMessage('Could not reach the Django API. Running read-only until it is available.');
+          setToast('Could not reach the Django API. Running read-only until it is available.');
         }
       });
     return () => { alive = false; };
-  }, [page, demoMode, setApiState, setApiMessage]);
+  }, [page, demoMode, setApiState]);
 
   // Re-fetch when search, status or page changes (server-side filtering/pagination).
   useEffect(() => {
@@ -135,12 +135,12 @@ export default function ModuleWorkspace({ page }) {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setApiState('offline');
-        setApiMessage('Session expired. Please sign in again.');
+        setToast('Session expired. Please sign in again.');
       }
       setToast('Server did not save the change: ' + error.message + '. Your form data is still available to retry.');
       return false;
     } finally { setBusy(false); }
-  }, [live, demoMode, canWrite, page, setApiState, setApiMessage]);
+  }, [live, demoMode, canWrite, page, setApiState]);
 
   const submit = async (event) => {
     event.preventDefault();

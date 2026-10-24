@@ -32,6 +32,9 @@ export function readCsrfToken() {
 function classifyError(error) {
   // 401 / 403 → session expired
   if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('havendesk:session-expired'));
+    }
     return new ApiError('session expired', error.status);
   }
   // 5xx or network failure → read-only offline

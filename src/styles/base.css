@@ -1,7 +1,0 @@
-*{box-sizing:border-box}
-body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:13px;-webkit-font-smoothing:antialiased}
-.app-shell{min-height:100vh}
-
-/* Refined visual layer — design tokens */
-:root{--ink:#232a24;--muted:#858d83;--line:#e8ece5;--canvas:#f5f7f4;--green:#41684a;--green-dark:#33583d;--soft-green:#edf4ec}
-body{background:radial-gradient(ellipse at 88% 6%,#edf2eb 0,transparent 31rem),var(--canvas);color:var(--ink)}

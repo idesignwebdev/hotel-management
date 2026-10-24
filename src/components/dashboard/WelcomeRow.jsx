@@ -22,7 +22,7 @@ export default function WelcomeRow() {
         <h1>Good morning, Amara <span className="wave">✳</span></h1>
         <p>Here’s what’s happening at your property today.</p>
       </div>
-      {permissions.actions.includes('createReservation') && <button className="primary-button" onClick={() => setModalOpen(true)}>
+      {canCreate && <button className="primary-button" onClick={() => setModalOpen(true)}>
         <span>＋</span> New reservation
       </button>}
     </section>

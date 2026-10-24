@@ -1,6 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from './store/appContext.jsx';
 import RequireRole from './components/common/RequireRole.jsx';
+import ErrorBoundary from './components/common/ErrorBoundary.jsx';
 import AppShell from './components/layout/AppShell.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Reservations from './pages/Reservations.jsx';
@@ -18,10 +20,26 @@ import NotFound from './pages/NotFound.jsx';
  *
  * RequireRole wraps each route and redirects to /unauthorized when the
  * current role cannot access it. Permissions live in src/store/permissions.js.
+ *
+ * ErrorBoundary wraps every route so a crashing page never takes down the
+ * whole dashboard — the sidebar stays visible and only the broken page
+ * shows the fallback. A havendesk:session-expired event (dispatched by the
+ * API client on 401/403) redirects to /login with the current path as
+ * ?return=.
  */
 export default function AppRouter() {
   const { role } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSessionExpired = useCallback(() => {
+    navigate(`/login?return=${encodeURIComponent(location.pathname)}`, { replace: true });
+  }, [navigate, location.pathname]);
+
+  useEffect(() => {
+    window.addEventListener('havendesk:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('havendesk:session-expired', handleSessionExpired);
+  }, [handleSessionExpired]);
 
   // Redirect to login when no role is set and we're not already on login.
   if (!role && location.pathname !== '/login') {
@@ -42,7 +60,7 @@ export default function AppRouter() {
             path="/dashboard"
             element={
               <RequireRole path="/dashboard">
-                <Dashboard />
+                <ErrorBoundary><Dashboard /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -50,7 +68,7 @@ export default function AppRouter() {
             path="/reservations"
             element={
               <RequireRole path="/reservations">
-                <Reservations />
+                <ErrorBoundary><Reservations /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -58,7 +76,7 @@ export default function AppRouter() {
             path="/front-desk"
             element={
               <RequireRole path="/front-desk">
-                <FrontDesk />
+                <ErrorBoundary><FrontDesk /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -66,7 +84,7 @@ export default function AppRouter() {
             path="/rooms"
             element={
               <RequireRole path="/rooms">
-                <ModuleWorkspace page="Rooms" />
+                <ErrorBoundary><ModuleWorkspace page="Rooms" /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -74,7 +92,7 @@ export default function AppRouter() {
             path="/guests"
             element={
               <RequireRole path="/guests">
-                <ModuleWorkspace page="Guests" />
+                <ErrorBoundary><ModuleWorkspace page="Guests" /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -82,7 +100,7 @@ export default function AppRouter() {
             path="/billing"
             element={
               <RequireRole path="/billing">
-                <ModuleWorkspace page="Billing & Payments" />
+                <ErrorBoundary><ModuleWorkspace page="Billing & Payments" /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -90,7 +108,7 @@ export default function AppRouter() {
             path="/housekeeping"
             element={
               <RequireRole path="/housekeeping">
-                <ModuleWorkspace page="Housekeeping" />
+                <ErrorBoundary><ModuleWorkspace page="Housekeeping" /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -98,7 +116,7 @@ export default function AppRouter() {
             path="/reports"
             element={
               <RequireRole path="/reports">
-                <Reports />
+                <ErrorBoundary><Reports /></ErrorBoundary>
               </RequireRole>
             }
           />
@@ -106,7 +124,7 @@ export default function AppRouter() {
             path="/settings"
             element={
               <RequireRole path="/settings">
-                <ModuleWorkspace page="Settings" />
+                <ErrorBoundary><ModuleWorkspace page="Settings" /></ErrorBoundary>
               </RequireRole>
             }
           />
