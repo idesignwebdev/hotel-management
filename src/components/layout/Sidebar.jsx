@@ -1,4 +1,5 @@
 import { useApp } from '../../store/appContext.jsx';
+import { isDemoMode } from '../../api/client.js';
 import { navGroups } from '../../data/sample.js';
 
 /**
@@ -6,15 +7,9 @@ import { navGroups } from '../../data/sample.js';
  * settings, help card and profile.
  */
 export default function Sidebar() {
-  const { activePage, setActivePage, mobileNavOpen, setMobileNavOpen, role, setRole, roleNames, permissions, setToast } = useApp();
+  const { activePage, setActivePage, mobileNavOpen, setMobileNavOpen, role, setRole, roleNames, permissions, selectNav, setToast, demoMode } = useApp();
 
-  const selectNav = (page) => {
-    setActivePage(page);
-    setMobileNavOpen(false);
-    const targets = { Dashboard: 'welcomeSection', Reservations: 'reservationsSection', 'Front desk': 'frontDeskSection' };
-    const target = targets[page] ? document.getElementById(targets[page]) : null;
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: page === 'Dashboard' ? 'start' : 'center' });
-  };
+  const showRoleSwitcher = demoMode || import.meta.env.DEV;
 
   return (
     <aside className={`sidebar ${mobileNavOpen ? 'open' : ''}`}>
@@ -45,7 +40,6 @@ export default function Sidebar() {
               <a key={page} className={`nav-item ${activePage === page ? 'active' : ''}`} href={`#${page.toLowerCase().replaceAll(' ', '-')}`} onClick={(event) => { event.preventDefault(); selectNav(page); }}>
                 <span className="nav-icon">{icon}</span>
                 {page}
-                {page === 'Reservations' && <span className="nav-count">8</span>}
                 {page === 'Housekeeping' && <span className="tiny-dot" />}
               </a>
             ))}
@@ -67,9 +61,13 @@ export default function Sidebar() {
 
         <div className="profile">
           <span className="profile-avatar">AM</span>
-          <label className="profile-role"><small>Preview role</small><select aria-label="Preview role" value={role} onChange={(event) => setRole(event.target.value)}>
-            {roleNames.map((name) => <option key={name}>{name}</option>)}
-          </select></label>
+          {showRoleSwitcher && (
+            <label className="profile-role"><small>Preview role</small><select aria-label="Preview role" value={role} onChange={(event) => setRole(event.target.value)}>
+              {roleNames.map((name) => <option key={name}>{name}</option>)}
+            </select></label>
+          )}
+          <span className="profile-server-role">{!showRoleSwitcher && role}</span>
+          <span className="more">···</span>
         </div>
       </div>
     </aside>

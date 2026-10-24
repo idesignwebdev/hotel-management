@@ -1,5 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState, useMemo } from 'react';
-import { hotelApi, unwrapList } from '../api/index.js';
+import { hotelApi, unwrapList, ApiError } from '../api/index.js';
+import { isDemoMode } from '../api/client.js';
 import {
   sampleDashboard,
   sampleArrivals,
@@ -8,15 +9,6 @@ import {
 } from '../data/sample.js';
 import { initialsFor, formatDate, money, normalizeReservation } from '../utils/formatters.js';
 import { policyFor, ROLE_NAMES } from './permissions.js';
-
-const todayDate = new Date();
-export const today = new Intl.DateTimeFormat('en-CA').format(todayDate);
-export const todayLabel = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-}).format(todayDate);
-export const todayEyebrow = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long', month: 'long', day: '2-digit', year: 'numeric',
-}).format(todayDate).toUpperCase();
 
 const AppContext = createContext(null);
 
@@ -44,6 +36,20 @@ export function AppProvider({ children }) {
       return ROLE_NAMES.includes(stored) ? stored : 'Hotel Manager';
     } catch { return 'Hotel Manager'; }
   });
+  // Currency and timezone come from saved settings / server, not hard-coded.
+  const [currency, setCurrency] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('havendesk:settings') || '{}');
+      return saved.currency || 'KES';
+    } catch { return 'KES'; }
+  });
+  const [timezone, setTimezone] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('havendesk:settings') || '{}');
+      return saved.timezone || 'Africa/Nairobi';
+    } catch { return 'Africa/Nairobi'; }
+  });
+  const demoMode = isDemoMode();
   const [query, setQuery] = useState('');
   const [globalQuery, setGlobalQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -56,6 +62,23 @@ export function AppProvider({ children }) {
   const [apiState, setApiState] = useState('loading');
   const [apiMessage, setApiMessage] = useState('');
   const [saving, setSaving] = useState(false);
+  const [serverCount, setServerCount] = useState(0);
+
+  const todayFor = useCallback(
+    (tz = timezone) => new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date()),
+    [timezone]
+  );
+  const today = todayFor(timezone);
+  const todayLabel = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    timeZone: timezone,
+  }).format(new Date());
+  const todayEyebrow = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long', month: 'long', day: '2-digit', year: 'numeric',
+    timeZone: timezone,
+  }).format(new Date()).toUpperCase();
+
+  const moneyWithCurrency = useCallback((value) => money(value, currency), [currency]);
 
   const filteredReservations = useMemo(() => reservations.filter((r) => {
     const matchesText = `${r.guest_name} ${r.email} ${r.room_type} ${r.room_number} ${r.status}`.toLowerCase().includes(query.toLowerCase());
@@ -63,7 +86,7 @@ export function AppProvider({ children }) {
     return matchesText && matchesStatus;
   }), [reservations, query, filter]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredReservations.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(Math.max(filteredReservations.length, serverCount) / pageSize));
   const permissions = useMemo(() => policyFor(role), [role]);
   const visibleReservations = filteredReservations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const firstVisible = filteredReservations.length ? (currentPage - 1) * pageSize + 1 : 0;
@@ -85,39 +108,77 @@ export function AppProvider({ children }) {
       hotelApi.getArrivals(),
     ]);
     let failures = 0;
-    if (results[0].status === 'fulfilled') setDashboard((current) => ({ ...current, ...results[0].value })); else failures++;
-    if (results[1].status === 'fulfilled') setReservations(unwrapList(results[1].value).map(normalizeReservation)); else failures++;
-    if (results[2].status === 'fulfilled') setArrivals(unwrapList(results[2].value).map((a, i) => ({
-      ...a,
-      id: a.id ?? i,
-      guest_name: a.guest_name || a.guest?.full_name || a.guest?.name || 'Guest',
-      room_type: a.room_type_name || a.room_type?.name || a.room_type || 'Room',
-      room_number: a.room_number || a.room?.number || '—',
-      arrival_time: a.arrival_time || a.check_in_time || '—',
-      initials: a.initials || initialsFor(a.guest_name || a.guest?.name),
-      color: a.color || ['av-lilac', 'av-peach', 'av-sage', 'av-blue'][i % 4],
-    }))); else failures++;
-    setApiState(failures === 0 ? 'connected' : 'offline');
-    setApiMessage(failures === 0 ? '' : 'Could not load all Django API data. Showing sample data for unavailable sections.');
-  }, []);
+    if (results[0].status === 'fulfilled') {
+      const d = results[0].value;
+      if (d.currency) setCurrency(d.currency);
+      if (d.timezone) setTimezone(d.timezone);
+      setDashboard((current) => ({ ...current, ...d }));
+    } else failures++;
+    if (results[1].status === 'fulfilled') {
+      const { items, count } = unwrapList(results[1].value);
+      setReservations(items.map(normalizeReservation));
+      setServerCount(count);
+    } else failures++;
+    if (results[2].status === 'fulfilled') {
+      const { items } = unwrapList(results[2].value);
+      setArrivals(items.map((a, i) => ({
+        ...a,
+        id: a.id ?? i,
+        guest_name: a.guest_name || a.guest?.full_name || a.guest?.name || 'Guest',
+        room_type: a.room_type_name || a.room_type?.name || a.room_type || 'Room',
+        room_number: a.room_number || a.room?.number || '—',
+        arrival_time: a.arrival_time || a.check_in_time || '—',
+        initials: a.initials || initialsFor(a.guest_name || a.guest?.name),
+        color: a.color || ['av-lilac', 'av-peach', 'av-sage', 'av-blue'][i % 4],
+      })));
+    } else failures++;
+
+    const demo = results.some((r) => r.status === 'rejected' && r.reason instanceof ApiError);
+    const authFail = results.some((r) => r.status === 'rejected' && r.reason instanceof ApiError && (r.reason.status === 401 || r.reason.status === 403));
+    if (authFail) {
+      setApiState('offline');
+      setApiMessage('Session expired. Please sign in again.');
+    } else if (demo) {
+      setApiState(demoMode ? 'demo' : 'offline');
+      setApiMessage(demoMode
+        ? 'Running in local demo mode. Connect the Django API to sync.'
+        : 'Could not reach the Django API. Running read-only until it is available.');
+    } else {
+      setApiState(failures === 0 ? 'connected' : 'offline');
+      setApiMessage(failures === 0 ? '' : 'Could not load all Django API data. Showing sample data for unavailable sections.');
+    }
+  }, [demoMode, currency, timezone, normalizeReservation]);
 
   const submitReservation = async (event) => {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const checkIn = form.get('check_in');
+    const checkOut = form.get('check_out');
+    if (new Date(`${checkOut}T00:00:00`) <= new Date(`${checkIn}T00:00:00`)) {
+      setToast('Check-out must be after check-in.');
+      formElement.elements.check_out.focus();
+      return;
+    }
+    // Reject past check-in dates.
+    const todayLocal = todayFor(timezone);
+    if (String(checkIn).slice(0, 10) < todayLocal) {
+      setToast('Check-in cannot be in the past.');
+      formElement.elements.check_in.focus();
+      return;
+    }
     const payload = {
       guest_name: String(form.get('guest_name')).trim(),
       email: String(form.get('email')).trim(),
       room_type: form.get('room_type'),
       guests: Number(form.get('guests')),
-      check_in: form.get('check_in'),
-      check_out: form.get('check_out'),
+      check_in: checkIn,
+      check_out: checkOut,
     };
-    if (new Date(`${payload.check_out}T00:00:00`) <= new Date(`${payload.check_in}T00:00:00`)) {
-      setToast('Check-out must be after check-in.');
-      formElement.elements.check_out.focus();
-      return;
-    }
+    // In live mode send no ID — the server assigns it. In demo mode generate a client ID.
+    if (!demoMode) delete payload.id;
+    else payload.id = crypto.randomUUID();
+
     setSaving(true);
     try {
       const created = await hotelApi.createReservation(payload);
@@ -128,8 +189,11 @@ export function AppProvider({ children }) {
       formElement.reset();
       setModalOpen(false);
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setApiMessage('Session expired. Please sign in again.');
+      }
       setToast(`Could not save reservation: ${error.message}`);
-      setApiState('offline');
+      setApiState(demoMode ? 'demo' : 'offline');
     } finally { setSaving(false); }
   };
 
@@ -140,6 +204,23 @@ export function AppProvider({ children }) {
     const target = targets[page] ? document.getElementById(targets[page]) : null;
     if (target) target.scrollIntoView({ behavior: 'smooth', block: page === 'Dashboard' ? 'start' : 'center' });
   }
+
+  const handleLogout = () => {
+    // Clear all client-side demo storage.
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('havendesk:')) localStorage.removeItem(key);
+      });
+    } catch (_) {}
+    setRole('Read-only / Auditor');
+    setActivePage('Dashboard');
+    setReservations([]);
+    setDashboard(sampleDashboard);
+    setArrivals([]);
+    setApiState('offline');
+    setApiMessage('Logged out. Local demo data cleared.');
+    setToast('Logged out.');
+  };
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -160,7 +241,8 @@ export function AppProvider({ children }) {
     arrivals, setArrivals,
     reservations, setReservations,
     activePage, setActivePage,
-    role, setRole, roleNames: ROLE_NAMES, permissions,
+    role, setRole, roleNames: ROLE_NAMES, permissions, demoMode,
+    currency, setCurrency, timezone, setTimezone,
     query, setQuery,
     globalQuery, setGlobalQuery,
     searchOpen, setSearchOpen,
@@ -171,11 +253,12 @@ export function AppProvider({ children }) {
     toast, setToast,
     apiState, apiMessage,
     saving, setSaving,
-    today, todayLabel, todayEyebrow,
-    refresh, submitReservation, selectNav,
+    serverCount, setServerCount,
+    today, todayLabel, todayEyebrow, todayFor,
+    refresh, submitReservation, selectNav, handleLogout,
     filteredReservations, pageCount, visibleReservations, firstVisible, lastVisible,
     navGroups,
-    formatDate, money, normalizeReservation,
+    formatDate, money: moneyWithCurrency, normalizeReservation,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

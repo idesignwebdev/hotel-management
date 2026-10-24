@@ -18,6 +18,8 @@ export const ENDPOINTS = {
   settings: import.meta.env.VITE_SETTINGS_ENDPOINT || '/api/settings/',
 };
 
+export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
 export const MODULE_ENDPOINT_KEYS = {
   Rooms: 'rooms',
   Guests: 'guests',

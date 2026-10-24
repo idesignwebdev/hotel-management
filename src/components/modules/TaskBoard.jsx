@@ -4,7 +4,7 @@ import Avatar from '../common/Avatar.jsx';
 /**
  * Kanban-style housekeeping task board grouped by status.
  */
-export default function TaskBoard({ rows, visible, statuses, status, busy, advance, canManage = false }) {
+export default function TaskBoard({ rows, visible, statuses, status, busy, advance, canManage = false, canWrite = false }) {
   return (
     <div className="task-board">
       {statuses.map((group) => {
@@ -21,9 +21,14 @@ export default function TaskBoard({ rows, visible, statuses, status, busy, advan
                 <h3>Room {task.room}</h3>
                 <p>{task.type}</p>
                 <div className="task-assignee"><span className="mini-avatar">{task.assignee.split(/\s+/).slice(0, 2).map((x) => x[0] || '').join('').toUpperCase()}</span>{task.assignee}</div>
-                {canManage && group !== 'Ready' && (
+                {canManage && canWrite && group !== 'Ready' && (
                   <button disabled={busy || group === 'Blocked'} className="task-advance" onClick={() => advance(task)}>
                     {group === 'Blocked' ? 'Maintenance blocker' : 'Advance task →'}
+                  </button>
+                )}
+                {canManage && !canWrite && group !== 'Ready' && (
+                  <button disabled className="task-advance" aria-disabled="true">
+                    Offline
                   </button>
                 )}
               </article>

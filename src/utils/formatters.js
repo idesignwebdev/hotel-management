@@ -39,8 +39,26 @@ export const normalizeReservation = (r, index = 0) => {
   };
 };
 
-export const money = (value, currency = 'KES') => {
+/**
+ * Normalize a raw API folio into the shape the billing UI expects.
+ * Handles both flat (total_amount, amount_paid) and nested (total, paid)
+ * serializer shapes so payments work regardless of which the backend sends.
+ */
+export const normalizeFolio = (f, index = 0) => ({
+  id: f.id ?? `folio-${index}`,
+  guest: f.guest || f.guest_name || f.guest?.name || 'Guest',
+  room: f.room || f.room_number || f.room?.number || '—',
+  date: f.date || f.created_at?.slice(0, 10) || '—',
+  total: f.total_amount ?? f.total ?? '—',
+  paid: f.amount_paid ?? f.paid ?? 0,
+  method: f.method || '—',
+  status: f.status || 'Unpaid',
+});
+
+export const money = (value, currency = null) => {
   if (value === '—' || value == null || value === '') return '—';
   const amount = Number(value);
-  return Number.isFinite(amount) ? `${currency} ${amount.toLocaleString('en-KE')}` : String(value);
+  if (!Number.isFinite(amount)) return String(value);
+  const curr = currency || 'KES';
+  return `${curr} ${amount.toLocaleString('en-KE')}`;
 };

@@ -17,7 +17,7 @@ export default function Reports({ notify }) {
     let active = true;
     hotelApi.getModule('Reports', { start_date: start, end_date: end, date_basis: basis.toLowerCase().replace(' ', '_') })
       .then((payload) => { if (active) { setMetrics(payload?.metrics || payload?.data || payload || {}); setLive(true); } })
-      .catch(() => { if (active) setLive(false); });
+      .catch(() => { if (active) { setMetrics({}); setLive(false); } });
     return () => { active = false; };
   }, [start, end, basis]);
 

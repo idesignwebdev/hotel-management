@@ -1,13 +1,26 @@
-import { apiRequest } from './client.js';
+import { apiRequest, ApiError } from './client.js';
 import { ENDPOINTS, MODULE_ENDPOINT_KEYS } from './endpoints.js';
 
 /**
  * Unwrap a Django REST Framework paginated response or a plain array.
- * Handles { results }, { data } and { items } shapes.
+ *
+ * Returns { items, count, next } so the UI can render real server counts
+ * and pagination instead of faking them from local state.
+ *
+ * Handles { results }, { data } and { items } shapes, plus top-level count
+ * fields (count, total, total_count) and pagination links (next).
  */
 export function unwrapList(payload) {
-  if (Array.isArray(payload)) return payload;
-  return payload?.results || payload?.data || payload?.items || [];
+  if (Array.isArray(payload)) {
+    return { items: payload, count: payload.length, next: null };
+  }
+  const items = payload?.results || payload?.data || payload?.items || [];
+  const count = payload?.count ?? payload?.total ?? payload?.total_count ?? items.length;
+  return {
+    items: Array.isArray(items) ? items : [],
+    count: Number(count) || items.length,
+    next: payload?.next ?? null,
+  };
 }
 
 function modulePath(page) {
@@ -20,8 +33,9 @@ function modulePath(page) {
 /**
  * hotelApi — every call the frontend makes to the Django API.
  *
- * Each method rejects when the backend is unavailable, so callers can fall
- * back to sample/demo data (see src/store/appContext.jsx).
+ * Each method rejects with an ApiError (carrying HTTP status) when the
+ * backend is unavailable, so callers can fall back to sample/demo data
+ * or switch to read-only offline mode.
  */
 export const hotelApi = {
   getDashboard: () => apiRequest(ENDPOINTS.dashboard),
@@ -48,3 +62,5 @@ export const hotelApi = {
   saveSettings: (settings) =>
     apiRequest(ENDPOINTS.settings, { method: 'PATCH', body: JSON.stringify(settings) }),
 };
+
+export { ApiError };
