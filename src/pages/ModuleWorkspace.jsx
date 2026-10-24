@@ -4,6 +4,7 @@ import { isDemoMode } from '../api/client.js';
 import { seed, pageInfo, fields } from '../data/sample.js';
 import { money, normalizeFolio } from '../utils/formatters.js';
 import { useApp } from '../store/appContext.jsx';
+import { PAGES, actionsFor } from '../store/permissions.js';
 import ModuleFrame from '../components/modules/ModuleFrame.jsx';
 import TaskBoard from '../components/modules/TaskBoard.jsx';
 
@@ -21,7 +22,7 @@ const initials = (s = '') => s.split(/\s+/).slice(0, 2).map((x) => x[0] || '').j
  *  - API unreachable and no demo mode → read-only offline (no local writes).
  */
 export default function ModuleWorkspace({ page }) {
-  const { setToast, permissions, demoMode, apiState, setApiState, apiMessage } = useApp();
+  const { setToast, demoMode, apiState, setApiState, apiMessage, role } = useApp();
   const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [rows, setRows] = useState(seed[page] || []);
@@ -194,8 +195,9 @@ export default function ModuleWorkspace({ page }) {
   if (page === 'Settings') return null; // handled by dedicated Settings page
 
   const info = pageInfo[page] || pageInfo.Rooms;
+  const pagePath = PAGES[page]?.path;
   const actionByPage = { Rooms: 'manageRooms', Guests: 'manageGuests', 'Billing & Payments': 'manageBilling', Housekeeping: 'manageHousekeeping' };
-  const canManage = permissions.actions.includes(actionByPage[page]);
+  const canManage = pagePath ? actionsFor(pagePath, role).includes(actionByPage[page]) : false;
   const statuses = page === 'Rooms' ? ['Ready', 'Occupied', 'Cleaning', 'Reserved', 'Out of service']
     : page === 'Billing & Payments' ? ['Paid', 'Partial', 'Unpaid']
     : page === 'Housekeeping' ? ['Queued', 'In progress', 'Awaiting inspection', 'Ready', 'Blocked']

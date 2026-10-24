@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../store/appContext.jsx';
 import Avatar from '../common/Avatar.jsx';
 
@@ -5,7 +6,8 @@ import Avatar from '../common/Avatar.jsx';
  * Today's arrivals strip with a link to the front desk.
  */
 export default function ArrivalsPanel() {
-  const { arrivals, selectNav, dashboard } = useApp();
+  const navigate = useNavigate();
+  const { arrivals, dashboard } = useApp();
 
   return (
     <article className="panel arrivals-panel" id="frontDeskSection">
@@ -14,7 +16,7 @@ export default function ArrivalsPanel() {
           <h2>Today’s arrivals <span className="count-pill">{dashboard.arrivals_today ?? arrivals.length}</span></h2>
           <p>Guests checking in today</p>
         </div>
-        <button className="text-link" onClick={() => selectNav('Front desk')}>View all <span>→</span></button>
+        <button className="text-link" onClick={() => navigate('/front-desk')}>View all <span>→</span></button>
       </div>
 
       <div className="arrival-list">
@@ -29,7 +31,7 @@ export default function ArrivalsPanel() {
           </div>
         ))}
       </div>
-      <button className="bottom-link" onClick={() => selectNav('Front desk')}>
+      <button className="bottom-link" onClick={() => navigate('/front-desk')}>
         See all {dashboard.arrivals_today ?? arrivals.length} arrivals <span>→</span>
       </button>
     </article>

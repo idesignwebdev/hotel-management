@@ -1,11 +1,13 @@
 import { useApp } from '../../store/appContext.jsx';
+import { actionsFor } from '../../store/permissions.js';
 
 /**
  * Dashboard header: date eyebrow, API status indicator, greeting and
  * "New reservation" action.
  */
 export default function WelcomeRow() {
-  const { todayEyebrow, apiState, apiMessage, refresh, setModalOpen, permissions } = useApp();
+  const { todayEyebrow, apiState, apiMessage, refresh, setModalOpen, role } = useApp();
+  const canCreate = actionsFor('/reservations', role).includes('createReservation');
 
   return (
     <section className="welcome-row" id="welcomeSection">

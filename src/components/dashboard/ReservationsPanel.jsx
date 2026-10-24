@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../store/appContext.jsx';
+import { actionsFor } from '../../store/permissions.js';
 import { formatDate, money } from '../../utils/formatters.js';
 import SearchInput from '../common/SearchInput.jsx';
 import Pagination from '../common/Pagination.jsx';
@@ -7,12 +9,13 @@ import Pagination from '../common/Pagination.jsx';
  * Recent reservations table with inline search, status filter and pagination.
  */
 export default function ReservationsPanel() {
+  const navigate = useNavigate();
   const {
     visibleReservations, filteredReservations, query, setQuery, filter, setFilter,
     currentPage, setCurrentPage, pageCount, firstVisible, lastVisible,
-    selectNav, setToast,
-    permissions,
+    setToast, role,
   } = useApp();
+  const canCreate = actionsFor('/reservations', role).includes('createReservation');
 
   return (
     <section className="panel reservations-panel" id="reservationsSection">
@@ -27,7 +30,7 @@ export default function ReservationsPanel() {
             ☷ <span>{filter === 'all' ? 'Filter' : filter[0].toUpperCase() + filter.slice(1)}</span>
             <b className="down">⌄</b>
           </button>
-          <button className="text-link desktop-view-all" onClick={() => selectNav('Reservations')}>View all <span>→</span></button>
+          <button className="text-link desktop-view-all" onClick={() => navigate('/reservations')}>View all <span>→</span></button>
         </div>
       </div>
 
@@ -50,7 +53,7 @@ export default function ReservationsPanel() {
                 <td>{formatDate(r.check_out)}</td>
                 <td><span className={`status-badge status-${r.status.toLowerCase().replaceAll(' ', '-')}`}>{r.status}</span></td>
                 <td><span className="amount">{money(r.amount, r.currency)}</span></td>
-                <td>{permissions.actions.includes('createReservation') && <button className="row-more" aria-label={`More options for ${r.guest_name}`} onClick={() => setToast(`Reservation for ${r.guest_name}`)}>···</button>}</td>
+                <td>{canCreate && <button className="row-more" aria-label={`More options for ${r.guest_name}`} onClick={() => setToast(`Reservation for ${r.guest_name}`)}>···</button>}</td>
               </tr>
             ))}
             {visibleReservations.length === 0 && (

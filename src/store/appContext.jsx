@@ -5,19 +5,17 @@ import {
   sampleDashboard,
   sampleArrivals,
   sampleReservations,
-  navGroups,
 } from '../data/sample.js';
 import { initialsFor, formatDate, money, normalizeReservation } from '../utils/formatters.js';
-import { policyFor, ROLE_NAMES } from './permissions.js';
 
 const AppContext = createContext(null);
 
 /**
- * Single source of truth for the shell state:
- * dashboard metrics, arrivals, reservations, navigation, search, filters,
- * pagination, modal/toast state and Django connectivity status.
+ * Single source of truth for shell state:
+ * dashboard metrics, arrivals, reservations, search, filters, pagination,
+ * modal/toast state, auth role, currency/timezone, and API connectivity.
  *
- * Components consume this through `useApp()` — no prop drilling.
+ * Routing (active page) is handled by React Router — not here.
  */
 export function useApp() {
   const ctx = useContext(AppContext);
@@ -29,14 +27,13 @@ export function AppProvider({ children }) {
   const [dashboard, setDashboard] = useState(sampleDashboard);
   const [arrivals, setArrivals] = useState(sampleArrivals);
   const [reservations, setReservations] = useState(sampleReservations);
-  const [activePage, setActivePage] = useState('Dashboard');
   const [role, setRole] = useState(() => {
     try {
       const stored = localStorage.getItem('havendesk:preview-role');
-      return ROLE_NAMES.includes(stored) ? stored : 'Hotel Manager';
+      return ['Owner / Administrator', 'Hotel Manager', 'Reception / Front Desk', 'Housekeeping', 'Finance / Cashier', 'Read-only / Auditor'].includes(stored)
+        ? stored : 'Hotel Manager';
     } catch { return 'Hotel Manager'; }
   });
-  // Currency and timezone come from saved settings / server, not hard-coded.
   const [currency, setCurrency] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('havendesk:settings') || '{}');
@@ -51,13 +48,10 @@ export function AppProvider({ children }) {
   });
   const demoMode = isDemoMode();
   const [query, setQuery] = useState('');
-  const [globalQuery, setGlobalQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const pageSize = 5;
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [apiState, setApiState] = useState('loading');
   const [apiMessage, setApiMessage] = useState('');
@@ -87,18 +81,26 @@ export function AppProvider({ children }) {
   }), [reservations, query, filter]);
 
   const pageCount = Math.max(1, Math.ceil(Math.max(filteredReservations.length, serverCount) / pageSize));
-  const permissions = useMemo(() => policyFor(role), [role]);
   const visibleReservations = filteredReservations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const firstVisible = filteredReservations.length ? (currentPage - 1) * pageSize + 1 : 0;
   const lastVisible = Math.min(currentPage * pageSize, filteredReservations.length);
 
   useEffect(() => { setCurrentPage(1); }, [query, filter]);
 
-  useEffect(() => {
-    try { localStorage.setItem('havendesk:preview-role', role); } catch (_) {}
-    if (!permissions.pages.includes(activePage)) setActivePage(permissions.pages[0] || 'Dashboard');
-    if (!permissions.actions.includes('createReservation')) setModalOpen(false);
-  }, [role, permissions, activePage]);
+  const handleLogout = () => {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('havendesk:')) localStorage.removeItem(key);
+      });
+    } catch (_) {}
+    setRole('Read-only / Auditor');
+    setReservations([]);
+    setDashboard(sampleDashboard);
+    setArrivals([]);
+    setApiState('offline');
+    setApiMessage('Logged out. Local demo data cleared.');
+    setToast('Logged out.');
+  };
 
   const refresh = useCallback(async () => {
     setApiState('loading');
@@ -133,12 +135,11 @@ export function AppProvider({ children }) {
       })));
     } else failures++;
 
-    const demo = results.some((r) => r.status === 'rejected' && r.reason instanceof ApiError);
     const authFail = results.some((r) => r.status === 'rejected' && r.reason instanceof ApiError && (r.reason.status === 401 || r.reason.status === 403));
     if (authFail) {
       setApiState('offline');
       setApiMessage('Session expired. Please sign in again.');
-    } else if (demo) {
+    } else if (results.some((r) => r.status === 'rejected')) {
       setApiState(demoMode ? 'demo' : 'offline');
       setApiMessage(demoMode
         ? 'Running in local demo mode. Connect the Django API to sync.'
@@ -160,7 +161,6 @@ export function AppProvider({ children }) {
       formElement.elements.check_out.focus();
       return;
     }
-    // Reject past check-in dates.
     const todayLocal = todayFor(timezone);
     if (String(checkIn).slice(0, 10) < todayLocal) {
       setToast('Check-in cannot be in the past.');
@@ -175,7 +175,6 @@ export function AppProvider({ children }) {
       check_in: checkIn,
       check_out: checkOut,
     };
-    // In live mode send no ID — the server assigns it. In demo mode generate a client ID.
     if (!demoMode) delete payload.id;
     else payload.id = crypto.randomUUID();
 
@@ -197,31 +196,6 @@ export function AppProvider({ children }) {
     } finally { setSaving(false); }
   };
 
-  function selectNav(page) {
-    setActivePage(page);
-    setMobileNavOpen(false);
-    const targets = { Dashboard: 'welcomeSection', Reservations: 'reservationsSection', 'Front desk': 'frontDeskSection' };
-    const target = targets[page] ? document.getElementById(targets[page]) : null;
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: page === 'Dashboard' ? 'start' : 'center' });
-  }
-
-  const handleLogout = () => {
-    // Clear all client-side demo storage.
-    try {
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('havendesk:')) localStorage.removeItem(key);
-      });
-    } catch (_) {}
-    setRole('Read-only / Auditor');
-    setActivePage('Dashboard');
-    setReservations([]);
-    setDashboard(sampleDashboard);
-    setArrivals([]);
-    setApiState('offline');
-    setApiMessage('Logged out. Local demo data cleared.');
-    setToast('Logged out.');
-  };
-
   useEffect(() => { refresh(); }, [refresh]);
 
   useEffect(() => {
@@ -231,7 +205,7 @@ export function AppProvider({ children }) {
   }, [toast]);
 
   useEffect(() => {
-    const onKey = (event) => { if (event.key === 'Escape') { setModalOpen(false); setSearchOpen(false); } };
+    const onKey = (event) => { if (event.key === 'Escape') setModalOpen(false); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -240,24 +214,19 @@ export function AppProvider({ children }) {
     dashboard, setDashboard,
     arrivals, setArrivals,
     reservations, setReservations,
-    activePage, setActivePage,
-    role, setRole, roleNames: ROLE_NAMES, permissions, demoMode,
+    role, setRole, demoMode,
     currency, setCurrency, timezone, setTimezone,
     query, setQuery,
-    globalQuery, setGlobalQuery,
-    searchOpen, setSearchOpen,
     filter, setFilter,
     pageSize, currentPage, setCurrentPage,
     modalOpen, setModalOpen,
-    mobileNavOpen, setMobileNavOpen,
     toast, setToast,
     apiState, apiMessage,
     saving, setSaving,
     serverCount, setServerCount,
     today, todayLabel, todayEyebrow, todayFor,
-    refresh, submitReservation, selectNav, handleLogout,
+    refresh, submitReservation, handleLogout,
     filteredReservations, pageCount, visibleReservations, firstVisible, lastVisible,
-    navGroups,
     formatDate, money: moneyWithCurrency, normalizeReservation,
   };
 
